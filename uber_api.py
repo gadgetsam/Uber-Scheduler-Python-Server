@@ -9,56 +9,84 @@ import endpoints
 from protorpc import messages
 from protorpc import message_types
 from protorpc import remote
-
-package = 'Hello'
-class newRide(messages.Message):
-    pickLong = messages.FloatField(1, required=True)
-    pickLat = messages.FloatField(2, required=True)
-    dropLong = messages.FloatField(3, required=True)
-    dropLat = messages.FloatField(4, required=True)
-    time = messages.IntegerField(5, required=True)
-class Greeting(messages.Message):
-  """Greeting that stores a message."""
-  message = messages.StringField(1)
-
-
-class GreetingCollection(messages.Message):
-  """Collection of Greetings."""
-  items = messages.MessageField(Greeting, 1, repeated=True)
+from datastore import UserRideDataBase
+datastores = UserRideDataBase()
 
 
 
-STORED_GREETINGS = GreetingCollection(items=[
-  Greeting(message='hello world!'),
-  Greeting(message='goodbye world!'),
-])
+class NewRide(messages.Message):
+    pickLong = messages.FloatField(1, required=False)
+    pickLat = messages.FloatField(2, required=False)
+    dropLong = messages.FloatField(3, required=False)
+    dropLat = messages.FloatField(4, required=False)
+    timeSec = messages.IntegerField(5, required=False)
+    daysOfWeek = messages.StringField(6, required=False)
+    time = messages.StringField(7, required=False)
+    key = messages.IntegerField(9, required=False)
+    userID = messages.StringField(8, required=False)
+    date = messages.StringField(10, required=False)
+    image = messages.StringField(11, required=False)
+    pickUp = messages.StringField(12, required=False)
+    dropOff = messages.StringField(13, required=False)
 
 
-@endpoints.api(name='helloworld', version='v1')
-class HelloWorldApi(remote.Service):
-  """Helloworld API v1."""
-
-  @endpoints.method(message_types.VoidMessage, GreetingCollection,
-                    path='hellogreeting', http_method='GET',
-                    name='greetings.listGreeting')
-  def newRide(self, unused_request):
-    return STORED_GREETINGS
-
-  MULTIPLY_METHOD_RESOURCE = endpoints.ResourceContainer(
-      Greeting,
-      times=messages.IntegerField(2, variant=messages.Variant.INT32,
-                                  required=True))
-
-  @endpoints.method(MULTIPLY_METHOD_RESOURCE, Greeting,
-                    path='hellogreeting/{times}', http_method='POST',
-                    name='greetings.multiply')
-  def greetings_multiply(self, request):
-    return Greeting(message=request.message * request.times)
-
-  ID_RESOURCE = endpoints.ResourceContainer(
-      message_types.VoidMessage,
-      id=messages.IntegerField(1, variant=messages.Variant.INT32))
+class Key(messages.Message):
+    key = messages.StringField(1, required=False)
 
 
+class user(messages.Message):
+    userID = messages.StringField(1, required=False)
+    rideID = messages.StringField(3, required=False)
+    message = messages.StringField(2)
 
-APPLICATION = endpoints.api_server([HelloWorldApi])
+class ReturnRides(messages.Message):
+    rides = messages.MessageField(NewRide, 1,repeated=True)
+
+
+@endpoints.api(name='uberApi', version='v1')
+class uberApi(remote.Service):
+    """Uber API v1."""
+    @endpoints.method(NewRide, Key,
+                      path='ride/create', http_method='POST',
+                      name='ride.create')  # defines url and type of request
+    def create_ride(self, request):
+        try:
+            key = int(request.key)
+        except TypeError:
+            key = False
+        key = datastores.create_ride_data(request.userID, request.pickLong, request.pickLat, request.dropLong, request.dropLat,
+                                          request.timeSec, request.daysOfWeek, request.time, request.date, request.image, key,request.pickUp, request.dropOff)
+        return Key(key=str(key.id()))
+
+    @endpoints.method(user, Key,
+                      path='user/create', http_method='POST',
+                      name='user.create')  # defines url and type of request
+    def create_user(self, request):
+        key = datastores.creatUser(request.userID, request.message)
+        return Key(key=key)
+
+    @endpoints.method(user, Key,
+                      path='ride/delete', http_method='POST',
+                      name='ride.delete')  # defines url and type of request
+    def delete_ride(self, request):
+        key = datastores.delete_ride(request.userID, request.rideID)
+        return Key(key=key)
+    @endpoints.method(user, Key,
+                      path='user/create', http_method='POST',
+                      name='user.create')  # defines url and type of request
+    def create_user(self, request):
+        key = datastores.creatUser(request.userID, request.message)
+        return Key(key=key)
+    @endpoints.method(user, ReturnRides,
+                      path='ride/return', http_method='POST',
+                      name='ride.return')  # defines url and type of request
+    def return_rides(self, request):
+        # key = datastores.creatUser(request.userID, request.message)
+        return datastores.return_rides(request.userID)
+
+
+
+
+
+
+APPLICATION = endpoints.api_server([uberApi])
