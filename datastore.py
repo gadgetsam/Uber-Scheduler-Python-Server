@@ -87,6 +87,12 @@ class UserRideDataBase(webapp2.RequestHandler):
         user.put()
         print ride
         return "success"
+    def update_ride(self, userID, rideID):
+        ride = ndb.Key('User', userID, 'Ride', int(rideID)).delete()
+        user =ndb.Key('User', userID).rides.remove(rideID)
+        user.put()
+        print ride
+        return "success"
 
 
 
