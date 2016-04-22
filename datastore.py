@@ -40,26 +40,23 @@ class UserRideDataBase(webapp2.RequestHandler):
 
 
             return "success"
+        return "user fail"
 
     def create_ride_data(self, userID, pickLong, pickLat, dropLong, dropLat, timeSec, daysOfWeek, time, date, image, rideID, pickUp, dropOff):
-        # print ("ID,",rideID)
         if(rideID != False):
             ride = ndb.Key('User', userID, 'Ride', int(rideID)).delete()
         user = ndb.Key('User', userID).get()
 
-        # print user
 
         newRide = Ride(pickLong=pickLong, pickLat=pickLat, dropLong=dropLong, dropLat=dropLat, timeSec=timeSec,
                        daysOfWeek=daysOfWeek, time=time, parent=ndb.Key('User', userID), date=date, image=image,
                        pickUp=pickUp, dropOff=dropOff)
         key =newRide.put()
-        # print key
         user.rides.append(key.id())
         user.put()
         return key
     def return_rides(self, userID):
         user = ndb.Key('User', userID).get()
-        # print user
         rideKey = []
         x = 5
         rides = []
@@ -68,30 +65,24 @@ class UserRideDataBase(webapp2.RequestHandler):
         except:
             return uber_api.ReturnRides()
         for rideID in rideKey:
-            print ndb.Key('Ride', rideID)
             ride = ndb.Key('User', userID, 'Ride', rideID).get()
             try:
-                print ride
                 newRide = uber_api.NewRide(pickLong=ride.pickLong, pickLat=ride.pickLat, dropLong=ride.dropLong, dropLat=ride.dropLat,
                         timeSec=ride.timeSec, daysOfWeek=ride.daysOfWeek, time=ride.time, key=rideID, date=ride.date,
                         image=ride.image,pickUp=ride.pickUp, dropOff=ride.dropOff)
                 rides.append(newRide)
             except AttributeError:
-                print "hi"
                 x ="test"
-            print x
         return uber_api.ReturnRides(rides=rides)
     def delete_ride(self, userID, rideID):
         ride = ndb.Key('User', userID, 'Ride', int(rideID)).delete()
         user =ndb.Key('User', userID).rides.remove(rideID)
         user.put()
-        print ride
         return "success"
     def update_ride(self, userID, rideID):
         ride = ndb.Key('User', userID, 'Ride', int(rideID)).delete()
         user =ndb.Key('User', userID).rides.remove(rideID)
         user.put()
-        print ride
         return "success"
 
 
