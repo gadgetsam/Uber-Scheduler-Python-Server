@@ -42,24 +42,24 @@ class UserRideDataBase(webapp2.RequestHandler):
             return "success"
 
     def create_ride_data(self, userID, pickLong, pickLat, dropLong, dropLat, timeSec, daysOfWeek, time, date, image, rideID, pickUp, dropOff):
-        print ("ID,",rideID)
+        # print ("ID,",rideID)
         if(rideID != False):
             ride = ndb.Key('User', userID, 'Ride', int(rideID)).delete()
         user = ndb.Key('User', userID).get()
 
-        print user
+        # print user
 
         newRide = Ride(pickLong=pickLong, pickLat=pickLat, dropLong=dropLong, dropLat=dropLat, timeSec=timeSec,
                        daysOfWeek=daysOfWeek, time=time, parent=ndb.Key('User', userID), date=date, image=image,
                        pickUp=pickUp, dropOff=dropOff)
         key =newRide.put()
-        print key
+        # print key
         user.rides.append(key.id())
         user.put()
         return key
     def return_rides(self, userID):
         user = ndb.Key('User', userID).get()
-        print user
+        # print user
         rideKey = []
         x = 5
         rides = []
